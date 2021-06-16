@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/parent_ly"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context=".DemoActivity">
+
+    <TextView
+        android:id="@+id/indicator_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_size_22" />
+
+    <!--代码-->
+    <com.jieluote.itemselectorbar.ItemSelectorBar
+        android:id="@+id/item_selector_bar"
+        android:layout_width="250dp"
+        android:layout_height="100dp"
+        android:background="@drawable/item_selector_bar_bg"
+     />
+
+    <!--横版 XML-->
+    <!--<com.jieluote.itemselectorbar.ItemSelectorBar
+        android:id="@+id/item_selector_bar"
+        android:layout_width="250dp"
+        android:layout_height="100dp"
+        android:background="@drawable/item_selector_bar_bg"
+        app:orientation="horizontal"
+        app:isShowScrollbars="true"
+        app:noSelectItemTextSize="@dimen/text_size_10"
+        app:noSelectItemTextColor="@color/text_color_no_select_item"
+        app:selectItemTextSize="@dimen/text_size_12"
+        app:selectItemTextColor="@color/text_color_select_item"
+        app:itemWidth="@dimen/item_width"
+        app:itemHeight="@dimen/item_height"
+        app:itemHorPadding="0dp"
+        app:scrollbarThumbHorizontal="@drawable/scrollview_thumb_bg"
+        app:scrollbarTrackHorizontal="@drawable/scrollview_track_bg"
+        app:contentText="··XML横版测试··"/>-->
+
+    <!--竖版 XML-->
+    <!--<com.jieluote.itemselectorbar.ItemSelectorBar
+        android:id="@+id/item_selector_bar"
+        android:layout_width="150dp"
+        android:layout_height="300dp"
+        android:background="@drawable/item_selector_bar_bg"
+        app:orientation="vertical"
+        app:isShowScrollbars="false"
+        app:noSelectItemTextSize="@dimen/text_size_10"
+        app:noSelectItemTextColor="@color/text_color_no_select_item"
+        app:selectItemTextSize="@dimen/text_size_12"
+        app:selectItemTextColor="@color/text_color_select_item"
+        app:itemBgDrawable="@drawable/item_bg"
+        app:itemWidth="@dimen/item_width"
+        app:itemHeight="@dimen/item_height"
+        app:itemVerPadding="2dp"
+        app:scrollbarThumbHorizontal="@drawable/scrollview_thumb_bg"
+        app:scrollbarTrackHorizontal="@drawable/scrollview_track_bg"
+        app:contentText="··XML横版测试··"/>-->
+
+</LinearLayout>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="selector_bar_attrs">
+        <attr name="isShowScrollbars" format="boolean" />            <!--是否显示滚动条-->
+        <attr name="orientation" format="string">                    <!--方向-->
+            <enum name="vertical" value="0" />
+            <enum name="horizontal" value="1" />
+        </attr>
+        <attr name="noSelectItemTextSize" format="dimension" />    <!--未选中item字体大小-->
+        <attr name="noSelectItemTextColor" format="color" />       <!--未选中item字体颜色-->
+        <attr name="selectItemTextSize" format="dimension" />      <!--选中item字体大小-->
+        <attr name="selectItemTextColor" format="color" />         <!--选中item字体颜色-->
+        <attr name="itemWidth" format="integer|dimension" />       <!--item 宽度-->
+        <attr name="itemHeight" format="integer|dimension" />      <!--item 高度-->
+        <attr name="itemHorPadding" format="integer|dimension" />  <!--item 水平padding-->
+        <attr name="itemVerPadding" format="integer|dimension" />  <!--item 垂直padding-->
+        <attr name="itemBgDrawable" format="reference" />          <!--item 背景-->
+        <attr name="contentText" format="string|reference" />      <!--item 内容-->
+
+        <attr name="scrollbarThumbHorizontal" format="reference" />    <!--scrollbarThumb 样式 (横向)-->
+        <attr name="scrollbarTrackHorizontal" format="reference" />    <!--scrollbarTrack 样式 (横向)-->
+        <attr name="scrollbarThumbVertical" format="reference" />      <!--scrollbarThumb 样式 (竖向)-->
+        <attr name="scrollbarTrackVertical" format="reference" />      <!--scrollbarTrack 样式 (竖向)-->
+    </declare-styleable>
+</resources>
