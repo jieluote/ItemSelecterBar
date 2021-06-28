@@ -2,29 +2,30 @@ package com.jieluote.itemselectorbar
 
 import android.content.Context
 import android.content.res.TypedArray
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.view.View.OnScrollChangeListener
 import android.view.ViewGroup
-import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
-import androidx.core.view.get
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 /**
- * item选择器(基于ScrollView实现)
+ * item选择器(基于RecycleView实现)
  * 支持横向纵向布局,支持字符串,数组,集合格式数据
  * 适用于选择年龄、城市、星座等文本场景
+ * 注意：如果不指定尺寸,那么只支持等长文本的显示
  * author: jieluote
  */
-class ItemSelectorBar : LinearLayout {
-    val TAG = ItemSelectorBar::class.java.simpleName
+class ItemSelectorBarByRV : LinearLayout {
+    val TAG = ItemSelectorBarByRV::class.java.simpleName
     lateinit var selectedListener: OnSelectedListener
 
     interface OnSelectedListener {
@@ -38,8 +39,13 @@ class ItemSelectorBar : LinearLayout {
     private var mContext: Context? = null
     private var mOrientation: Orientation? = null
     private var mIsShowScrollbars: Boolean = false
+
     private var mItemWidth: Int = ITEM_DEFAULT_WIDTH
     private var mItemHeight: Int = ITEM_DEFAULT_HEIGHT
+
+    private var mIsSetWidth: Boolean = false
+    private var mIsSetHeight: Boolean = false
+
     private var mItemVerPadding: Int = 0   //垂直padding
     private var mItemHorPadding: Int = 0   //水平padding
     private var mTotalSize: Int = 0        //总大小(坐标)
@@ -59,112 +65,114 @@ class ItemSelectorBar : LinearLayout {
     private var mContentList: List<Any>? = null
     private var mDataList: ArrayList<Any>? = null
 
-    private lateinit var mVerticalScrollView: ScrollView
-    private lateinit var mHorizontalScrollView: HorizontalScrollView
-    private lateinit var mContentLy: LinearLayout
+    private lateinit var mItemSelectorRv: RecyclerView
     private var mCustomTextView: TextView? = null
+    private lateinit var mItemSelectorAdapter:ItemSelectorAdapter
 
     private var mTempSelectedIndex: Int = 0
     private val SELECT_ITEM_SCALE = 0.5f  //选中的item占 滚动条的位置比例(0到1),比如0.5就是滚动条1/2处(中间)显示选中的item
+    private var mScrollDistance: Int = 0
 
     companion object{
         val NO_SELECT_ITEM_DEFAULT_TEXT_SIZE: Int = 16
         val SELECT_ITEM_DEFAULT_TEXT_SIZE: Int = 20
-        val ITEM_DEFAULT_WIDTH: Int = LinearLayout.LayoutParams.WRAP_CONTENT
-        val ITEM_DEFAULT_HEIGHT: Int = LinearLayout.LayoutParams.WRAP_CONTENT
+        val ITEM_DEFAULT_WIDTH: Int = RecyclerView.LayoutParams.WRAP_CONTENT
+        val ITEM_DEFAULT_HEIGHT: Int = RecyclerView.LayoutParams.WRAP_CONTENT
     }
 
-    fun setOrientation(orientation: Orientation?): ItemSelectorBar {
+    fun setOrientation(orientation: Orientation?): ItemSelectorBarByRV {
         mOrientation = orientation
         return this
     }
 
-    fun setNoSelectItemTextSize(textSize: Float): ItemSelectorBar {
+    fun setNoSelectItemTextSize(textSize: Float): ItemSelectorBarByRV {
         mNoSelectItemTextSize = textSize
         return this
     }
 
-    fun setNoSelectItemTextColor(textColor: Int): ItemSelectorBar {
+    fun setNoSelectItemTextColor(textColor: Int): ItemSelectorBarByRV {
         mNoSelectItemTextColor = textColor
         return this
     }
 
-    fun setSelectItemTextSize(textSize: Float): ItemSelectorBar {
+    fun setSelectItemTextSize(textSize: Float): ItemSelectorBarByRV {
         mSelectItemTextSize = textSize
         return this
     }
 
-    fun setSelectItemTextColor(textColor: Int): ItemSelectorBar {
+    fun setSelectItemTextColor(textColor: Int): ItemSelectorBarByRV {
         mSelectItemTextColor = textColor
         return this
     }
 
-    fun setItemBgDrawable(itemBgDrawable : Int):ItemSelectorBar{
+    fun setItemBgDrawable(itemBgDrawable : Int):ItemSelectorBarByRV{
         mItemBgDrawable = itemBgDrawable
         return this
     }
 
-    fun setContentText(text: String?): ItemSelectorBar {
+    fun setContentText(text: String?): ItemSelectorBarByRV {
         mContentStr = text
         return this
     }
 
-    fun setContentText(text: Array<String>?): ItemSelectorBar {
+    fun setContentText(text: Array<String>?): ItemSelectorBarByRV {
         mContentArrays = text
         return this
     }
 
-    fun setContentText(text: List<Any>?): ItemSelectorBar {
+    fun setContentText(text: List<Any>?): ItemSelectorBarByRV {
         mContentList = text
         return this
     }
 
-    fun setShowScrollbars(isShow: Boolean): ItemSelectorBar {
+    fun setShowScrollbars(isShow: Boolean): ItemSelectorBarByRV {
         mIsShowScrollbars = isShow
         return this
     }
 
-    fun setItemWidth(itemWidth: Int): ItemSelectorBar {
+    fun setItemWidth(itemWidth: Int): ItemSelectorBarByRV {
         mItemWidth = itemWidth
+        mIsSetWidth = true
         return this
     }
 
-    fun setItemHeight(itemHeight: Int): ItemSelectorBar {
+    fun setItemHeight(itemHeight: Int): ItemSelectorBarByRV {
         mItemHeight = itemHeight
+        mIsSetHeight = true
         return this
     }
 
-    fun setItemVerPadding(itemVerPadding: Int): ItemSelectorBar {
+    fun setItemVerPadding(itemVerPadding: Int): ItemSelectorBarByRV {
         mItemVerPadding = itemVerPadding
         return this
     }
 
-    fun setItemHorPadding(itemHorPadding: Int): ItemSelectorBar {
+    fun setItemHorPadding(itemHorPadding: Int): ItemSelectorBarByRV {
         mItemHorPadding = itemHorPadding
         return this
     }
 
-    fun setThumbHorizontal(Thumb: Drawable): ItemSelectorBar {
+    fun setThumbHorizontal(Thumb: Drawable): ItemSelectorBarByRV {
         scrollbarThumbHorizontal = Thumb
         return this
     }
 
-    fun setTrackHorizontal(Thumb: Drawable): ItemSelectorBar {
+    fun setTrackHorizontal(Thumb: Drawable): ItemSelectorBarByRV {
         scrollbarTrackHorizontal = Thumb
         return this
     }
 
-    fun setThumbVertical(Thumb: Drawable): ItemSelectorBar {
+    fun setThumbVertical(Thumb: Drawable): ItemSelectorBarByRV {
         scrollbarThumbVertical = Thumb
         return this
     }
 
-    fun setTrackVertical(Thumb: Drawable): ItemSelectorBar {
+    fun setTrackVertical(Thumb: Drawable): ItemSelectorBarByRV {
         scrollbarTrackVertical = Thumb
         return this
     }
 
-    fun setCustomTextView(textView: TextView): ItemSelectorBar {
+    fun setCustomTextView(textView: TextView): ItemSelectorBarByRV {
         mCustomTextView = textView
         return this
     }
@@ -224,13 +232,66 @@ class ItemSelectorBar : LinearLayout {
     }
 
     private fun initView() {
-        val inflate = inflate(this.context, R.layout.item_selector_bar_layout, this)
-        initScrollView(inflate)
+        val inflate = inflate(this.context, R.layout.item_selector_bar_by_rv_layout, this)
     }
 
-    private fun initScrollView(rootView: View) {
-        mVerticalScrollView = rootView.findViewById<ScrollView>(R.id.vertical_scroll_view)
-        mHorizontalScrollView = rootView.findViewById<HorizontalScrollView>(R.id.horizontal_scroll_view)
+    private fun initRecycleView(view: View?) {
+        mItemSelectorRv = rootView.findViewById<RecyclerView>(R.id.item_selector_rv)
+        val layoutManager = LinearLayoutManager(context)
+        if(isHorizontal()){
+            Log.d(TAG,"initRecycleView HORIZONTAL")
+            layoutManager.orientation = RecyclerView.HORIZONTAL
+        }else{
+            Log.d(TAG,"initRecycleView VERTICAL")
+            layoutManager.orientation = RecyclerView.VERTICAL
+        }
+
+        mItemSelectorRv.setLayoutManager(layoutManager)
+        mItemSelectorAdapter = ItemSelectorAdapter()
+        mItemSelectorRv.setAdapter(mItemSelectorAdapter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mItemSelectorRv.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    var itemSize = 0
+                    var parentSize = 0
+                    if (isHorizontal()) {
+                        mScrollDistance += dx
+                        parentSize = recyclerView.width
+                        itemSize = mItemWidth
+                    } else {
+                        mScrollDistance += dy
+                        parentSize = recyclerView.height
+                        itemSize = mItemHeight
+                    }
+
+                    // 得到选中的item的下标
+                    val currentSelectedIndex = getSelectedIndexByScrollDistance(mScrollDistance, itemSize, parentSize)
+                    Log.d(TAG, "currentSelectedIndex:" + currentSelectedIndex + ",mScrollDistance:" + mScrollDistance)
+                    if (currentSelectedIndex == mTempSelectedIndex) {
+                        return
+                    }
+                    mTempSelectedIndex = currentSelectedIndex
+                    for (index in 0 until mItemSelectorAdapter.getItemCount()) {
+                        var tv = recyclerView.layoutManager?.findViewByPosition(index)
+                        if (tv == null) {
+                            Log.d(TAG, "item is null,index:" + index)
+                            continue
+                        }
+                        tv = tv as TextView
+                        Log.d(TAG, "tv:" + tv)
+                        if (index == currentSelectedIndex) {
+                            if (this@ItemSelectorBarByRV::selectedListener.isInitialized) {
+                                selectedListener.onSelectedItem(index, tv)
+                            }
+                            setSeletedUI(tv)
+                        } else {
+                            setUnSeletedUI(tv)
+                        }
+                    }
+                }
+            })
+        }
     }
 
     fun create() {
@@ -238,28 +299,28 @@ class ItemSelectorBar : LinearLayout {
     }
 
     fun create(defaultIndex: Int) {
+        initRecycleView(this)
         applyUIStyle()
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            applyData()
-        }
+        applyData()
+        notifyData()
         if (defaultIndex != -1) {
             scrollToIndex(defaultIndex)
         } else {
             //默认移动到中间位置item
-            val index = Math.floor(((mDataList?.size ?: 0) / 2.0))
+            val index = Math.ceil(((mDataList?.size ?: 0) / 2.0))
             scrollToIndex(index.toInt())
         }
     }
 
     private fun applyUIStyle() {
-        mVerticalScrollView.setVerticalScrollBarEnabled(mIsShowScrollbars);
-        mHorizontalScrollView.setHorizontalScrollBarEnabled(mIsShowScrollbars);
+        mItemSelectorRv.setVerticalScrollBarEnabled(mIsShowScrollbars);
+        mItemSelectorRv.setHorizontalScrollBarEnabled(mIsShowScrollbars);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            mHorizontalScrollView.horizontalScrollbarTrackDrawable = scrollbarTrackHorizontal
-            mHorizontalScrollView.horizontalScrollbarThumbDrawable = scrollbarThumbHorizontal
-            mVerticalScrollView.verticalScrollbarTrackDrawable = scrollbarTrackVertical
-            mVerticalScrollView.verticalScrollbarThumbDrawable = scrollbarThumbVertical
+            mItemSelectorRv.horizontalScrollbarTrackDrawable = scrollbarTrackHorizontal
+            mItemSelectorRv.horizontalScrollbarThumbDrawable = scrollbarThumbHorizontal
+            mItemSelectorRv.verticalScrollbarTrackDrawable = scrollbarTrackVertical
+            mItemSelectorRv.verticalScrollbarThumbDrawable = scrollbarThumbVertical
         }
     }
 
@@ -289,60 +350,30 @@ class ItemSelectorBar : LinearLayout {
             return
         }
         Log.d(TAG, "applyData size:" + (mDataList?.size ?: 0))
-        mContentLy = LinearLayout(mContext)
-        val lp = LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        )
-        lp.gravity = Gravity.CENTER
-        mContentLy.layoutParams = lp
-        Log.d(TAG, "mOrientation:" + mOrientation)
-        if (isHorizontal()) {
-            mContentLy.orientation = LinearLayout.HORIZONTAL
-            bindHorizontalScrollView(mDataList)
-        } else {
-            mContentLy.orientation = LinearLayout.VERTICAL
-            bindVerticalScrollView(mDataList)
-        }
     }
 
     fun notifyData() {
         Log.d(TAG, "notifyData size:" + (mDataList?.size ?: 0))
-        if (isHorizontal()) {
-            mContentLy.orientation = LinearLayout.HORIZONTAL
-            bindHorizontalScrollView(mDataList)
-        } else {
-            mContentLy.orientation = LinearLayout.VERTICAL
-            bindVerticalScrollView(mDataList)
-        }
+        mItemSelectorAdapter.notifyDataSetChanged()
     }
 
     /**
-     * 滚动到指定下标 index从0开始
+     * 滚动到指定下标 index从0开始(需要延时,否则不生效)
      */
     private fun scrollToIndex(index: Int) {
         Log.d(TAG, "scrollToIndex index:" + index)
-        if ((isHorizontal() && (mItemWidth == ITEM_DEFAULT_WIDTH))
-            || (!isHorizontal() && (mItemHeight == ITEM_DEFAULT_HEIGHT))) {
-            //当宽/高度为wrap_content时先设置选中效果
-            //因为移动后再去设置选中效果,如果选中字体很大,那么textView会被撑大,看起来就不居中了。
-            val tv = mContentLy.getChildAt(index) as TextView
-            setSeletedUI(tv)
-        }
-
-        //滚动需要延时,否则不生效
         Handler(Looper.getMainLooper()).postDelayed({
             if (mDataList?.size ?: 0 <= index) {
                 return@postDelayed
             }
-            if (mOrientation == Orientation.horizontal) {
-                val distance = getScrollDistanceByIndex(index, mHorizontalScrollView.width)
+            if (isHorizontal()) {
+                val distance = getScrollDistanceByIndex(index, mItemSelectorRv.width)
                 Log.d(TAG, "scrollToIndex x:" + distance)
-                mHorizontalScrollView.scrollTo(distance, 0)
-            } else if (mOrientation == Orientation.vertical) {
-                val distance = getScrollDistanceByIndex(index, mVerticalScrollView.height)
+                mItemSelectorRv.scrollBy(distance, 0)
+            } else {
+                val distance = getScrollDistanceByIndex(index, mItemSelectorRv.height)
                 Log.d(TAG, "scrollToIndex y:" + y)
-                mVerticalScrollView.scrollTo(0, distance)
+                mItemSelectorRv.scrollBy(0, distance)
             }
         }, 600)
     }
@@ -350,147 +381,101 @@ class ItemSelectorBar : LinearLayout {
     /**
      * 根据下标获取滚动距离
      */
-    fun getScrollDistanceByIndex(index: Int, parentSize: Int): Int {
+    private fun getScrollDistanceByIndex(index: Int, parentSize: Int): Int {
         val childCount = mDataList?.size ?: 0
         if (childCount == 0) {
             return 0
         }
+
         //当前item自身的size(如果是横向那么就是宽度,如果是纵向那么就是高度)
         var itemSize = 0
-        //当前item的总size,也可以理解为它的坐标加上自身size
-        var itemTotalSize = 0f
-        val item = mContentLy.get(index)
+        val item = mItemSelectorRv.layoutManager?.findViewByPosition(index)
         if (isHorizontal()) {
-            itemSize = item.width
-            itemTotalSize = item.x + itemSize
+            itemSize = if (item == null) mItemWidth else item.width
         } else {
-            itemSize = item.height
-            itemTotalSize = item.y + itemSize
+            itemSize = if (item == null) mItemHeight else item.height
         }
+        //当前item的总size
+        val itemTotalSize = index.toFloat() / childCount * mTotalSize
 
         //将item移到中间所需要的距离
         var distance =
-            itemTotalSize - ((parentSize - itemSize) * SELECT_ITEM_SCALE + itemSize)
-        Log.d(TAG,"item size:" + itemSize + ",itemTotalSize:" + itemTotalSize + ",parentSize:" + parentSize + ",distance:" + distance)
+                itemTotalSize - ((parentSize - itemSize).toFloat() * SELECT_ITEM_SCALE + itemSize)
+        Log.d(TAG, "item size:" + itemSize + ",itemTotalSize:" + itemTotalSize + ",parentSize:" + parentSize + ",distance:" + distance)
         return distance.toInt()
     }
 
     /**
      * 根据滚动距离获取被选中Item的下标
      */
-    fun getSelectedIndexByScrollDistance(distance: Int, parentSize: Int): Int {
-        //当前scale位置size(宽度或者高度)
+    fun getSelectedIndexByScrollDistance(distance: Int, itemSize: Int, parentSize: Int): Int {
+        //当前scale位置尺寸(宽度或者高度)
         val currentScaleSize = parentSize * SELECT_ITEM_SCALE + distance
         val childCount: Int = mDataList?.size ?: 0
-        val selectedIndex = currentScaleSize / mTotalSize * childCount
-        return selectedIndex.toInt()
+        val totalSize = itemSize * childCount
+        mTotalSize = totalSize
+        return (currentScaleSize / totalSize * childCount).toInt()
     }
 
-    private fun bindHorizontalScrollView(list: ArrayList<Any>?) {
-        Log.d(TAG, "bindHor list:" + list)
-        if (list == null) {
-            return
+    inner class ItemSelectorAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            return ItemSelectorHolder(getDefaultItemTextView())
         }
-        mContentLy.removeAllViews()
-        mHorizontalScrollView.removeAllViews()
 
-        for (itemStr in list) {
-            Log.d(TAG, "initScrollView itemStr:" + itemStr)
-            val defaultItemTextView = getDefaultItemTextView(itemStr.toString())
-            mContentLy.addView(defaultItemTextView)
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            if(holder.itemView is TextView) {
+                val content = mDataList?.get(position)
+                (holder.itemView as TextView).setText(content.toString())
+            }
         }
-        mHorizontalScrollView.setOnScrollChangeListener(OnScrollChangeListener { view, scrollX, scrollY, i2, i3 ->
-            // 得到选中的item的下标
-            val currentSelectedIndex = getSelectedIndexByScrollDistance(scrollX, view.width)
-            if (currentSelectedIndex == mTempSelectedIndex) {
-                return@OnScrollChangeListener
-            }
-            Log.d(TAG, "currentSelectedIndex:" + currentSelectedIndex)
-            mTempSelectedIndex = currentSelectedIndex
-            for (index in 0 until mContentLy.childCount) {
-                val tv = mContentLy.getChildAt(index) as TextView
-                if (index == currentSelectedIndex) {
-                    if (this@ItemSelectorBar::selectedListener.isInitialized) {
-                        selectedListener.onSelectedItem(index, tv)
-                    }
-                    setSeletedUI(tv)
-                } else {
-                    setUnSeletedUI(tv)
-                }
-            }
-        })
-        mHorizontalScrollView.addView(mContentLy)
+
+        override fun getItemCount(): Int {
+            return if(mDataList == null) 0 else mDataList?.size!!
+        }
     }
 
-    private fun bindVerticalScrollView(list: List<Any>?) {
-        Log.d(TAG, "bindVer list:" + list)
-        if (list == null) {
-            return
+    internal class ItemSelectorHolder(itemView: View) :
+            RecyclerView.ViewHolder(itemView) {
+        init {
         }
-        mContentLy.removeAllViews()
-        mVerticalScrollView.removeAllViews()
-
-        for (itemStr in list) {
-            Log.d(TAG, "initScrollView itemStr:" + itemStr)
-            mContentLy.addView(getDefaultItemTextView(itemStr.toString()))
-        }
-        mVerticalScrollView.setOnScrollChangeListener(OnScrollChangeListener { view, scrollX, scrollY, i2, i3 ->
-            // 得到选中的item的下标
-            val currentSelectedIndex = getSelectedIndexByScrollDistance(scrollY, view.height)
-            if (currentSelectedIndex == mTempSelectedIndex) {
-                return@OnScrollChangeListener
-            }
-            Log.d(TAG, "currentSelectedIndex:" + currentSelectedIndex)
-            mTempSelectedIndex = currentSelectedIndex
-            for (index in 0 until mContentLy.childCount) {
-                val tv = mContentLy.getChildAt(index) as TextView
-                if (index == currentSelectedIndex) {
-                    if (this@ItemSelectorBar::selectedListener.isInitialized) {
-                        selectedListener.onSelectedItem(index, tv)
-                    }
-                    setSeletedUI(tv)
-                } else {
-                    setUnSeletedUI(tv)
-                }
-            }
-        })
-        mVerticalScrollView.addView(mContentLy)
     }
 
-    private fun getDefaultItemTextView(str: String): TextView {
+    private fun getDefaultItemTextView(): TextView {
         if (mCustomTextView != null) {
             mNoSelectItemTextSize = mCustomTextView!!.textSize
             mNoSelectItemTextColor = mCustomTextView!!.currentTextColor
             return mCustomTextView as TextView
         }
         val tv = TextView(context)
-        val lp = LayoutParams(
-            mItemWidth,
-            mItemHeight
-        )
-        Log.d(TAG,"mItemWidth:" + mItemWidth + ",mItemHeight:" + mItemHeight + ",mItemHorPadding:" + mItemHorPadding + ",mItemVerPadding:" + mItemVerPadding)
+        val lp = RecyclerView.LayoutParams(RecyclerView.LayoutParams.WRAP_CONTENT,RecyclerView.LayoutParams.WRAP_CONTENT)
+        if (mIsSetWidth) {
+            lp.width = mItemWidth
+        }
+        if (mIsSetHeight) {
+            lp.height = mItemHeight
+        }
+
         tv.setPadding(mItemHorPadding, mItemVerPadding, mItemHorPadding, mItemVerPadding)
         tv.layoutParams = lp
         tv.addOnLayoutChangeListener(object : OnLayoutChangeListener {
-            override fun onLayoutChange(view: View?,p1: Int,p2: Int,p3: Int,p4: Int,p5: Int,p6: Int,p7: Int,p8: Int) {
+            override fun onLayoutChange(view: View?, p1: Int, p2: Int, p3: Int, p4: Int, p5: Int, p6: Int, p7: Int, p8: Int) {
                 if (isHorizontal()) {
-                    mTotalSize += view?.width ?: 0
+                        mItemWidth = view?.width ?: 0
+
                 } else {
-                    mTotalSize += view?.height ?: 0
+                        mItemHeight = view?.height ?: 0
                 }
-                Log.d(TAG,"get view width:"+view?.width+",height:"+view?.height)
                 tv.removeOnLayoutChangeListener(this)
             }
         })
         context?.resources?.let {
             if (mItemBgDrawable != null && mItemBgDrawable != -1) tv.setBackground(
-                it.getDrawable(mItemBgDrawable!!)
+                    it.getDrawable(mItemBgDrawable!!)
             )
         }
         tv.setSingleLine()
         tv.gravity = Gravity.CENTER
         tv.maxLines = 1
-        tv.text = str
         tv.textSize = mNoSelectItemTextSize
         tv.setTextColor(resources.getColor(mNoSelectItemTextColor))
         return tv
@@ -504,6 +489,18 @@ class ItemSelectorBar : LinearLayout {
     private fun setUnSeletedUI(tv:TextView){
         tv.textSize = mNoSelectItemTextSize
         tv.setTextColor(resources.getColor(mNoSelectItemTextColor))
+    }
+
+    class SpaceItemDecoration(private val vspace: Int, private val hspace: Int) : RecyclerView.ItemDecoration() {
+        override fun getItemOffsets(
+                outRect: Rect,
+                view: View,
+                recyclerView: RecyclerView,
+                state: RecyclerView.State
+        ) {
+            outRect.top = vspace
+            outRect.right = hspace
+        }
     }
 
     enum class Orientation(i: String) {

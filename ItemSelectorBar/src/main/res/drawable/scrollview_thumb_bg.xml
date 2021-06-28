@@ -2,7 +2,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <!--定义颜色-->
-    <solid android:color="@color/text_color_no_select_item"/>
+    <solid android:color="@color/red_color"/>
     <!--定义粗细-->
     <size android:width="2dp"/>
 </shape>

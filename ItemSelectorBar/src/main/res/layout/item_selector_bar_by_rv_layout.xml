@@ -5,16 +5,12 @@
     android:gravity="center"
     android:orientation="horizontal">
 
-    <ScrollView
-        android:id="@+id/vertical_scroll_view"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/item_selector_rv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:scrollbars="vertical" />
-
-    <HorizontalScrollView
-        android:id="@+id/horizontal_scroll_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:scrollbarSize="5dp"
+        android:scrollbarThumbVertical="@color/text_color_gray"
         android:scrollbars="horizontal" />
 
 </LinearLayout>

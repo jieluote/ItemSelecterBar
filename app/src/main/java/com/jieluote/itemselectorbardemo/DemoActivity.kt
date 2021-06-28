@@ -1,11 +1,12 @@
 package com.jieluote.itemselectorbardemo
 
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
+//import com.jieluote.itemselectorbar.ItemSelectorBarByRV
 import com.jieluote.itemselectorbar.ItemSelectorBar
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -27,16 +28,20 @@ class DemoActivity : AppCompatActivity() {
         //testByXML()
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     fun testByCode(){
-        /***代码方式,通过链式调用setXXX方法实现,最后需要调用create方法***/
         //支持的数据格式共4种,分别是 1.字符串 2.数组 3.list(不可变集合) 4.mutableList(可变集合)
-        var str = "--甲乙丙丁戊己庚辛壬癸--"
-        val arrays = arrayOf("","","","1","2","3","4","5","6","7","8","9","10","11","12","","","")
+        var str = "---鼠牛虎兔龙蛇马羊猴鸡狗猪---"
+        val arrays = arrayOf("1","2","3","4","5","6","7","8","9","10","11")
         val list: List<String> = listOf("请选择城市","深圳", "北京","广州","呼和浩特","乌鲁木齐","上海","请选择城市")
         val mutableList: MutableList<Any> = mutableListOf("","","","",1990,1991,1992,1993,1994,1995,1996,"","","")
+
+        /***代码方式,通过链式调用setXXX方法实现,最后需要调用create方法***/
         item_selector_bar
             .setOrientation(ItemSelectorBar.Orientation.horizontal)             //方向
             .setShowScrollbars(false)                                           //是否显示滚动条
+            //.setThumbHorizontal(getDrawable(R.drawable.scrollview_thumb_bg)!!)//设置滚动条Thumb背景 (Android 29及以上支持)
+            //.setTrackHorizontal(getDrawable(R.drawable.scrollview_track_bg)!!)//设置滚动条Track背景 (Android 29及以上支持)
             .setNoSelectItemTextSize(12F)                                       //未选中文本大小
             .setNoSelectItemTextColor(R.color.text_color_no_select_item)        //未选中文本颜色
             .setSelectItemTextSize(18F)                                         //选中文本大小
@@ -57,9 +62,11 @@ class DemoActivity : AppCompatActivity() {
                 }
             }
         })
-        //mutableList.remove(1990)
-        //mutableList.remove(1996)
-        //item_selector_bar.notifyData() 当可变集合内容发生改变后,调用notify()进行刷新
+        /*
+        mutableList.remove(1990)
+        mutableList.remove(1996)
+        //当可变集合内容发生改变后,调用notify()进行刷新
+        item_selector_bar.notifyData() */
     }
 
     fun testByXML(){

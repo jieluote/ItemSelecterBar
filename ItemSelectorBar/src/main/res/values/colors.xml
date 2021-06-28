@@ -3,6 +3,6 @@
     <color name="text_color_gray">#668D8A8A</color>
     <color name="text_color_no_select_item">#668D8A8A</color>
     <color name="text_color_select_item">#FF000000</color>
-    <color name="back_color">#F53D5B</color>
+    <color name="red_color">#F53D5B</color>
     <color name="white_color">#FFFFFF</color>
 </resources>
