@@ -7,7 +7,7 @@ author: jieluote
 
 
 ### 引入方式 ###
-implementation 'com.github.jieluote:ItemSelecterBar:1.0'
+implementation 'com.github.jieluote:ItemSelecterBar:1.1'
 
 
 ### 支持的数据格式 ###
